@@ -21,7 +21,7 @@ then
                 [[ "$0" = "$BASH_SOURCE" ]] && exit 2 || return 2 # handle exits from shell or function but don't exit interactive shell
         fi
 
-		# Loop through all folders starting with public-mainnet-peer-package*
+	# Loop through all folders starting with public-mainnet-peer-package*
         for NODEFOLDER in $(find public-mainnet-peer-package* -maxdepth 0 -type d -printf '%f\n') ; do
                 NODEFOLDERS+=($NODEFOLDER)
         done
