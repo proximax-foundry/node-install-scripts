@@ -9,6 +9,9 @@
 # cat /root/.ssh/id_rsa.pub | ssh proximax@207.180.195.181 'cat >> .ssh/authorized_keys'
 # ssh proximax@207.180.195.181 "chmod 700 .ssh; chmod 640 .ssh/authorized_keys"
 
+# You can create a symbolic link to this script to /etc/cron.daily
+# ln -s /opt/scipts/snapshot_create.sh /etc/cron.daily/snapshot_create
+
 # VARS:
 MONITORINGSERVER="207.180.195.181"
 NODEFOLDER="/mnt/proximax/public-mainnet-peer-package-01"
