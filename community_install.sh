@@ -5,7 +5,7 @@
 # VARS:
 SNAPSHOT="http://207.180.195.181/snapshot.tar.xz"
 PEERS="http://207.180.195.181/peers-p2p.json"
-FRIENDLYNAME="mainnet-contabo-${HOSTNAME%%.*}"
+FRIENDLYNAME="mainnet-${HOSTNAME%%.*}"
 GITHUB="https://github.com/proximax-storage/xpx-mainnet-chain-onboarding/archive/refs/heads/master.zip"
 PACKAGEFOLDER="xpx-mainnet-chain-onboarding-master/docker-method"
 LEAVEDISKSPACEFREE=32 #GB
