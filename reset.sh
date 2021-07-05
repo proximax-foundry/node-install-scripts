@@ -54,10 +54,10 @@ for NODEFOLDER in ${NODEFOLDERS[@]} ; do
         echo $(date +%T) "Delete data folder, this process can take up more than 1 hour"
         find ./data -type f -delete
 
-		echo $(date +%T) "Extracting the snapshot, this process can take up more than 1 hour"
-		tar -xJf ../snapshot.tar.xz
+	echo $(date +%T) "Extracting the snapshot, this process can take up more than 1 hour"
+	tar -xJf ../snapshot.tar.xz
 
-		cd ..
+	cd ..
 
         i=$((i+1))
 done
@@ -72,9 +72,9 @@ for NODEFOLDER in ${NODEFOLDERS[@]} ; do
         cd $NODEFOLDER
 
         echo "Start Docker container"
-		docker-compose up -d
+	docker-compose up -d
 
-		cd ..
+	cd ..
 done
 
 if [[ $i -eq 1 ]]
