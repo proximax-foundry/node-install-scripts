@@ -3,7 +3,7 @@
 # Usage: update.sh
 
 # VARS:
-DOCKERIMAGE="proximax/proximax-sirius-chain:v0.6.9-buster"
+DOCKERIMAGE="proximax/proximax-sirius-chain:v0.6.9-buster" # This info should be grapped from github
 PEERS="http://207.180.195.181/peers-p2p.json"
 DEFAULTPATH="/mnt/proximax/"
 
@@ -33,14 +33,14 @@ for NODEFOLDER in $(find public-mainnet-peer-package* -maxdepth 0 -type d -print
         sed -i "/^[[:space:]]*image:/ s|:.*|: $DOCKERIMAGE|" docker-compose.yml
 
         echo "Download latest peers-p2p"
-		cd resources
+	cd resources
         curl -O $PEERS
-		cd ..
+	cd ..
 
         echo "Start Docker container"
-		docker-compose up -d
+	docker-compose up -d
 
-		cd ..
+	cd ..
 
         i=$((i+1))
 done
