@@ -68,7 +68,7 @@ echo '        addresses: [1.1.1.1]' >> /etc/netplan/00-proximax.yaml
 netplan apply
 sleep 5s
 
-echo "Create VHD, this process can take up more than 1 hour"
+echo "Create VHD"
 cd /media
 VHDSIZE=$(($FREEDISKSPACE - $LEAVEDISKSPACEFREE))
 echo "VHD Size:" $VHDSIZE"GB"
