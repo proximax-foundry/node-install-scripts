@@ -32,9 +32,14 @@ for NODEFOLDER in $(find public-mainnet-peer-package* -maxdepth 0 -type d -print
         echo "Replace docker image with: $DOCKERIMAGE"
         sed -i "/^[[:space:]]*image:/ s|:.*|: $DOCKERIMAGE|" docker-compose.yml
 
-        echo "Download latest peers-p2p"
+        echo "Update resource files"
 	cd resources
+	echo "Download latest peers-p2p"
         curl -O $PEERS
+	echo "Update config files
+	#sed -i '/^syncTimeout\s*=\s*/a New property = 1000' config-node.properties	# Add property after xxx
+	#sed -i 's/^\(syncTimeout\s*=\s*\).*\$/\160s/' config-node.properties 		# Change property
+	#sed -i '/^New property\s*=\s*/d' config-node.properties 			# Delete property
 	cd ..
 
         echo "Start Docker container"
