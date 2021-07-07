@@ -4,14 +4,16 @@
 # Or:    install.sh 6 (to install 6 nodes)
 
 # VARS:
-SNAPSHOT="http://207.180.195.181/snapshot.tar.xz"
-PUBLICPEERS="http://207.180.195.181/peers-p2p.json"
-FRIENDLYNAME="mainnet-${HOSTNAME%%.*}"
+COMMUNITY=true
+MONITORINGSERVER="207.180.195.181"
+SNAPSHOT="http://${MONITORINGSERVER}/snapshot.tar.xz"
+PUBLICPEERS="http://${MONITORINGSERVER}/peers-p2p.json"
 GITHUB="https://github.com/proximax-storage/xpx-mainnet-chain-onboarding/archive/refs/heads/master.zip"
 PACKAGEFOLDER="xpx-mainnet-chain-onboarding-master/docker-method"
-MONITORINGSERVER="207.180.195.181"
-LEAVEDISKSPACEFREE=32 #GB
-PEERSFILE="peers-p2p.json"
+FRIENDLYNAME="mainnet-${HOSTNAME%%.*}"
+LEAVEDISKSPACEFREE=32 # GB
+PEERSFILE="peers-p2p.json" # Name of the peers file for this node
+DEFAULTPATH="/mnt/proximax"
 
 #-----------------------------------------------------------------------------------------------------------
 
@@ -22,7 +24,7 @@ PRIVATEKEYS=false
 NUMBEROFNODES=0
 
 [[ -z "$1" ]] && { echo "At least one argument is needed! Either a private key or the number of nodes you want to install" ; exit 1; }
-[[ $FREEDISKSPACE -le 96 ]] && { echo "Not enough diskspace available: $FREEDISKSPACE GB, need at least 96 GB of free diskspace" ; exit 2; }
+[[ $FREEDISKSPACE -le 96 ]] && { echo "Not enough disk space available: $FREEDISKSPACE GB, need at least 96 GB of free disk space" ; exit 2; }
 
 # Number of nodes
 [[ ${#1} -eq 64 ]] && { PRIVATEKEYS=true; }
@@ -40,13 +42,15 @@ for ((i = 1; i <= $NUMBEROFNODES; i++))
   OPENPORTS+=",${PORT}"
  done
 
-echo "Disable root ssh login"
-#openssl passwd -1 {password}
-usermod -p '$1$gfiW.W7B$Ka0HV7d.2.iYs66x4meUO0' root
-useradd -m -p '$1$gfiW.W7B$Ka0HV7d.2.iYs66x4meUO0' -s /bin/bash --comment "ProximaX" proximax
-echo 'proximax ALL=(ALL) ALL' >> /etc/sudoers
-sed -i 's/^\(PermitRootLogin\s* \s*\).*$/\1no/' /etc/ssh/sshd_config
-systemctl restart sshd
+if [ $COMMUNITY = false ]; then
+	echo "Disable root ssh login"
+	#openssl passwd -1 {password}
+	usermod -p '$1$gfiW.W7B$Ka0HV7d.2.iYs66x4meUO0' root
+	useradd -m -p '$1$gfiW.W7B$Ka0HV7d.2.iYs66x4meUO0' -s /bin/bash --comment "ProximaX" proximax
+	echo 'proximax ALL=(ALL) ALL' >> /etc/sudoers
+	sed -i 's/^\(PermitRootLogin\s* \s*\).*$/\1no/' /etc/ssh/sshd_config
+	systemctl restart sshd
+fi
 
 echo "Install dependencies"
 apt-get update
@@ -62,6 +66,7 @@ echo '    eth0:' >> /etc/netplan/00-proximax.yaml
 echo '      nameservers:' >> /etc/netplan/00-proximax.yaml
 echo '        addresses: [1.1.1.1]' >> /etc/netplan/00-proximax.yaml
 netplan apply
+sleep 5s
 
 echo "Create VHD, this process can take up more than 1 hour"
 cd /media
@@ -69,19 +74,19 @@ VHDSIZE=$(($FREEDISKSPACE - $LEAVEDISKSPACEFREE))
 echo "VHD Size:" $VHDSIZE"GB"
 truncate -s $VHDSIZE"G" proximax.img
 mkfs -t xfs -i maxpct=90 proximax.img
-mkdir /mnt/proximax
-mount -t auto -o loop /media/proximax.img /mnt/proximax
-echo '/media/proximax.img  /mnt/proximax  xfs    defaults        0  0' >> /etc/fstab
+mkdir $DEFAULTPATH
+mount -t auto -o loop /media/proximax.img $DEFAULTPATH
+echo '/media/proximax.img ${DEFAULTPATH}  xfs    defaults        0  0' >> /etc/fstab
 
 echo "Install Docker"
-cd /mnt/proximax
+cd $DEFAULTPATH
 curl -fsSL https://get.docker.com -o get-docker.sh
 chmod +x ./get-docker.sh
 ./get-docker.sh
 curl -L "https://github.com/docker/compose/releases/download/1.28.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-sed -i 's/^ExecStart.*/& -g \/mnt\/proximax\/docker/' /lib/systemd/system/docker.service
+sed -i 's|^ExecStart.*|& -g '"$DEFAULTPATH"'/docker|' /lib/systemd/system/docker.service
 systemctl enable docker.service
 systemctl start docker.service
 systemctl restart docker.service # Creates /mnt/proximax/docker
@@ -97,8 +102,10 @@ sed -i 's/^\(RESTRICT_SYSLOG\s*=\s*\).*$/\1"3"/' /etc/csf/csf.conf
 sed -i "s/^\(TCP_IN\s*=\s*\).*\$/\1\"$OPENPORTS\"/" /etc/csf/csf.conf
 sed -i 's/^\(TCP_OUT\s*=\s*\).*$/\1"1:65535"/' /etc/csf/csf.conf
 sed -i 's/^\(UDP_IN\s*=\s*\).*$/\1""/' /etc/csf/csf.conf
-echo 'tcp|in|d=9080|s='$MONITORINGSERVER >> /etc/csf/csf.allow
-echo 'tcp|in|d=9100|s='$MONITORINGSERVER >> /etc/csf/csf.allow
+if [ $COMMUNITY = false ]; then
+	echo 'tcp|in|d=9080|s='$MONITORINGSERVER >> /etc/csf/csf.allow
+	echo 'tcp|in|d=9100|s='$MONITORINGSERVER >> /etc/csf/csf.allow
+fi
 echo $MYIP >> /etc/csf/csf.ignore
 echo 'exe:/usr/sbin/rsyslogd' >> /etc/csf/csf.pignore
 echo 'exe:/usr/lib/systemd/systemd-timesyncd' >> /etc/csf/csf.pignore
@@ -114,14 +121,14 @@ cd csf-post-docker
 csf -ra
 
 echo "Download snapshot"
-cd /mnt/proximax
+cd $DEFAULTPATH
 wget -O snapshot.tar.xz $SNAPSHOT
 
 echo "Installing node"
 wget -O node.zip $GITHUB
 unzip -qq node.zip "$PACKAGEFOLDER/*"
 
-# Peer file
+# Peers file
 if [ $PRIVATEKEYS = false ]; then
 	echo "{" >> ./$PEERSFILE
 	echo "  \"_info\": \"this file contains a list of all trusted peers and can be shared\"," >> ./$PEERSFILE
@@ -228,8 +235,10 @@ do
 	cd ..
 done
 
+# Clean up
 rm -rf "${PACKAGEFOLDER%%/*}"
 rm -rf node.zip
+rm -rf snapshot.tar.xz
 
 docker container ls
 
