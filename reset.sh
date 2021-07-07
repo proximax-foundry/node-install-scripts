@@ -7,7 +7,7 @@
 DEFAULTPATH="/mnt/proximax/"
 SNAPSHOT="http://207.180.195.181/snapshot.tar.xz"
 
-[[ ! -d $DEFAULTPATH ]] && { echo "Directory $DEFAULTPATH doesn't exist! Change reset.sh to use the right script." ; exit 1 ; }
+[[ ! -d $DEFAULTPATH ]] && { echo "Directory $DEFAULTPATH doesn't exist! Change reset.sh to use the right directory." ; exit 1 ; }
 
 cd $DEFAULTPATH
 
@@ -52,7 +52,7 @@ for NODEFOLDER in ${NODEFOLDERS[@]} ; do
         docker-compose down
 
         echo $(date +%T) "Delete data folder, this process can take up more than 1 hour"
-        find ./data -type f -delete
+        find ./data -type f -delete # Faster than 'rm -rf'
 
 	echo $(date +%T) "Extracting the snapshot, this process can take up more than 1 hour"
 	tar -xJf ../snapshot.tar.xz
