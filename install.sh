@@ -76,7 +76,7 @@ truncate -s $VHDSIZE"G" proximax.img
 mkfs -t xfs -i maxpct=90 proximax.img
 mkdir $DEFAULTPATH
 mount -t auto -o loop /media/proximax.img $DEFAULTPATH
-echo '/media/proximax.img ${DEFAULTPATH}  xfs    defaults        0  0' >> /etc/fstab
+echo '/media/proximax.img '$DEFAULTPATH'  xfs    defaults        0  0' >> /etc/fstab
 
 echo "Install Docker"
 cd $DEFAULTPATH
